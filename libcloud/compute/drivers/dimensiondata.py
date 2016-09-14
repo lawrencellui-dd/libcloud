@@ -1653,8 +1653,8 @@ class DimensionDataNodeDriver(NodeDriver):
             status=NodeState.RUNNING
         )
 
-    def ex_list_firewall_addess_list(self, network_domain, page_size=50,
-                                     page_number=1):
+    def ex_list_firewall_address_list(self, network_domain, page_size=50,
+                                      page_number=1):
         params = {'pageSize': page_size, 'pageNumber': page_number}
         params['networkDomainId'] = self._network_domain_to_network_domain_id(
             network_domain)
