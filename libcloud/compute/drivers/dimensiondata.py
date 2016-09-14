@@ -40,6 +40,7 @@ from libcloud.common.dimensiondata import DimensionDataNatRule
 from libcloud.common.dimensiondata import DimensionDataAntiAffinityRule
 from libcloud.common.dimensiondata import DimensionDataFirewallAddressList
 from libcloud.common.dimensiondata import DimensionDataFirewallPortList
+from libcloud.common.dimensiondata import DimensionDataFirewallPortRange
 from libcloud.common.dimensiondata import NetworkDomainServicePlan
 from libcloud.common.dimensiondata import DimensionDataTagKey
 from libcloud.common.dimensiondata import DimensionDataTag
@@ -1577,6 +1578,17 @@ class DimensionDataNodeDriver(NodeDriver):
             status=NodeState.RUNNING
         )
 
+    def ex_list_firewall_port_list(self, network_domain, page_size=50,
+                                   page_number=1):
+        params = {'pageSize': page_size, 'pageNumber': page_number}
+        params['networkDomainId'] = self._network_domain_to_network_domain_id(
+            network_domain)
+
+        response = self.connection \
+            .request_with_orgId_api_2('network/portList',
+                                      params=params).object
+        return self._to_firewall_port_lists(response, network_domain)
+
     def ex_create_firewall_address_list(self, name, network_domain,
                                         ip_version, description=None,
                                         ip_ranges=None,
@@ -2722,6 +2734,31 @@ class DimensionDataNodeDriver(NodeDriver):
             ip_version=findtext(element, 'ipVersion', TYPES_URN),
             ip_addresses=ip_addresses,
             child_ip_address_ids=child_ip_address_ids,
+            status=findtext(element, 'state', TYPES_URN))
+
+    def _to_firewall_port_lists(self, object, network_domain):
+        port_lists = []
+        for element in findall(object, 'portList', TYPES_URN):
+            port_lists.append(self._to_firewall_port_list(element,
+                                                          network_domain))
+        return port_lists
+
+    def _to_firewall_port_list(self, element, network_domain):
+        ports = []
+        for port in findall(element, 'port'):
+            begin_port = port.get('begin')
+            end_port = port.get('end')
+            ports.append(DimensionDataFirewallPortRange(begin_port, end_port))
+        child_port_list_ids = []
+        for child_port_list in findall(element, 'childPortList'):
+            child_port_list_ids.append(child_port_list.get('id'))
+        return DimensionDataFirewallPortList(
+            name=findtext(element, 'name', TYPES_URN),
+            network_domain=network_domain,
+            id=element.get('id'),
+            description=findtext(element, 'description', TYPES_URN),
+            port_ranges=ports,
+            child_port_list_ids=child_port_list_ids,
             status=findtext(element, 'state', TYPES_URN))
 
     def _to_ip_blocks(self, object):
