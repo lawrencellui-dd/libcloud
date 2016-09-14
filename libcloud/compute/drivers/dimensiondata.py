@@ -38,6 +38,8 @@ from libcloud.common.dimensiondata import DimensionDataFirewallRule
 from libcloud.common.dimensiondata import DimensionDataFirewallAddress
 from libcloud.common.dimensiondata import DimensionDataNatRule
 from libcloud.common.dimensiondata import DimensionDataAntiAffinityRule
+from libcloud.common.dimensiondata import DimensionDataFirewallAddressList
+from libcloud.common.dimensiondata import DimensionDataFirewallPortList
 from libcloud.common.dimensiondata import NetworkDomainServicePlan
 from libcloud.common.dimensiondata import DimensionDataTagKey
 from libcloud.common.dimensiondata import DimensionDataTag
@@ -1518,6 +1520,138 @@ class DimensionDataNodeDriver(NodeDriver):
         response_code = findtext(result, 'responseCode', TYPES_URN)
         return response_code in ['IN_PROGRESS', 'OK']
 
+    def ex_create_firewall_port_list(self, name, network_domain,
+                                     port_ranges, description=None,
+                                     child_port_list_ids=None):
+        """
+        Create a firewall port list
+
+        :param  name: The name to give the new port list
+        :type   name: ``str``
+
+        :param  network_domain: The network domain the port list belongs to
+        :type   network_domain: :class:`DimensionDataNetworkDomain`
+
+        :param  description: An additional description of the port list
+        :type   description: ``str``
+
+        :param  port_ranges: A list of of DimensionDataFirewallPortRange types
+        :type   port_ranges: ``list`` of
+            :class:`DimensionDataFirewallPortRange`
+
+        :param  child_port_list_ids: A list of child port list ids
+        :type   child_port_list_ids: ``list`` of ``str``
+
+        :rtype: :class:`DimensionDataFirewallPortList`
+        """
+
+        create_node = ET.Element('createPortList', {'xmlns': TYPES_URN})
+        ET.SubElement(create_node, 'networkDomainId').text = network_domain.id
+        ET.SubElement(create_node, 'name').text = name
+        if description is not None:
+            ET.SubElement(create_node, 'description').text = description
+        for port_range in port_ranges:
+            port = ET.SubElement(create_node, 'port')
+            port.set('begin', port_range.begin_port)
+            if port_range.end_port is not None:
+                port.set('end', port_range.end_port)
+        if child_port_list_ids is not None:
+            for child_port_id in child_port_list_ids:
+                ET.SubElement(create_node, 'childPortListId').text = child_port_id
+        result = self.connection.request_with_orgId_api_2(
+            'network/createPortList',
+            method='POST',
+            data=ET.tostring(create_node)).object
+
+        for info in findall(result, 'info', TYPES_URN):
+            if info.get('name') == 'portListId':
+                portlist_id = info.get('value')
+
+        return DimensionDataFirewallPortList(
+            name=name,
+            network_domain=network_domain,
+            id=portlist_id,
+            description=description,
+            port_ranges=port_ranges,
+            child_port_list_ids=child_port_list_ids,
+            status=NodeState.RUNNING
+        )
+
+    def ex_create_firewall_address_list(self, name, network_domain,
+                                        ip_version, description=None,
+                                        ip_ranges=None,
+                                        child_ip_address_list_ids=None):
+        """
+        Create a firewall address list
+
+        :param  name: The name to give the new address list
+        :type   name: ``str``
+
+        :param  network_domain: The network domain the address list belongs to
+        :type   network_domain: :class:`DimensionDataNetworkDomain`
+
+        :param  ip_version: Either ``IPV4`` or ``IPV6``
+        :type   ip_version: ``str``
+
+        :param  description: An additional description of the address list
+        :type   description: ``str``
+
+        :param  ip_ranges: A list of of DimensionDataFirewallListIPRange types
+        :type   ip_ranges:  ``list`` of
+            :class:`DimensionDataFirewallListIPAddress`
+
+        :param  child_ip_address_list_ids: A list of child ip addresslist ids
+        :type   external_ip: ``list`` of ``str``
+
+        :rtype: :class:`DimensionDataFirewallAddressList`
+        """
+        create_node = ET.Element('createIpAddressList', {'xmlns': TYPES_URN})
+        ET.SubElement(create_node, 'networkDomainId').text = network_domain.id
+        ET.SubElement(create_node, 'name').text = name
+        if description is not None:
+            ET.SubElement(create_node, 'description').text = description
+        ET.SubElement(create_node, 'ipVersion').text = ip_version
+        for ip_range in ip_ranges:
+            address = ET.SubElement(create_node, 'ipAddress')
+            address.set('begin', ip_range.begin_ip)
+            if ip_range.end_ip is not None:
+                address.set('end', ip_range.end_ip)
+            elif ip_range.prefix is not None:
+                address.set('prefixSize', ip_range.prefix)
+        if child_ip_address_list_ids is not None:
+            for child_ip_id in child_ip_address_list_ids:
+                ET.SubElement(create_node, 'childIpAddressListId').text = child_ip_id
+        result = self.connection.request_with_orgId_api_2(
+            'network/createIpAddressList',
+            method='POST',
+            data=ET.tostring(create_node)).object
+
+        for info in findall(result, 'info', TYPES_URN):
+            if info.get('name') == 'ipAddressListId':
+                ip_addresslist_id = info.get('value')
+
+        return DimensionDataFirewallAddressList(
+            name=name,
+            network_domain=network_domain,
+            id=ip_addresslist_id,
+            description=description,
+            ip_version=ip_version,
+            ip_addresses=ip_ranges,
+            child_ip_address_ids=child_ip_address_list_ids,
+            status=NodeState.RUNNING
+        )
+
+    def ex_list_firewall_addess_list(self, network_domain, page_size=50,
+                                     page_number=1):
+        params = {'pageSize': page_size, 'pageNumber': page_number}
+        params['networkDomainId'] = self._network_domain_to_network_domain_id(
+            network_domain)
+
+        response = self.connection \
+            .request_with_orgId_api_2('network/ipAddressList',
+                                      params=params).object
+        return self._to_firewall_address_lists(response, network_domain)
+
     def ex_create_nat_rule(self, network_domain, internal_ip, external_ip):
         """
         Create a NAT rule
@@ -2564,6 +2698,31 @@ class DimensionDataNodeDriver(NodeDriver):
                 if port_list is not None else None,
                 address_list_id=address_list.get('id')
                 if address_list is not None else None)
+
+    def _to_firewall_address_lists(self, object, network_domain):
+        address_lists = []
+        for element in findall(object, 'ipAddressList', TYPES_URN):
+            address_lists.append(self._to_firewall_address_list(element,
+                                                                network_domain))
+        return address_lists
+
+    def _to_firewall_address_list(self, element, network_domain):
+        ip_addresses = []
+        for ip_address in findall(element, 'ipAddress'):
+            ip_addresses.append(ip_address)
+        child_ip_address_ids = []
+        for child_ip_address in findall(element, 'childIpAddressList'):
+            child_ip_address_ids.append(child_ip_address.get('id'))
+        address_list = element.find(fixxpath('ipAddressList', TYPES_URN))
+        return DimensionDataFirewallAddressList(
+            name=findtext(element, 'name', TYPES_URN),
+            network_domain=network_domain,
+            id=element.get('id'),
+            description=findtext(element, 'description', TYPES_URN),
+            ip_version=findtext(element, 'ipVersion', TYPES_URN),
+            ip_addresses=ip_addresses,
+            child_ip_address_ids=child_ip_address_ids,
+            status=findtext(element, 'state', TYPES_URN))
 
     def _to_ip_blocks(self, object):
         blocks = []

@@ -832,6 +832,57 @@ class DimensionDataFirewallAddress(object):
         self.port_list_id = port_list_id
 
 
+class DimensionDataFirewallAddressList(object):
+    """
+    A firewall address list
+    """
+    def __init__(self, name, network_domain, id, description, ip_version,
+                 ip_addresses, child_ip_address_ids, status):
+        self.name = name
+        self.network_domain = network_domain
+        self.id = str(id)
+        self.description = description
+        self.ip_version = ip_version
+        self.ip_addresses = ip_addresses
+        self.child_ip_address_ids = child_ip_address_ids
+        self.status = status
+
+
+class DimensionDataFirewallListIPRange(object):
+    """
+    A model for an ip address entry in DimensionDataFirewallAddressList.ip_addresses
+    """
+    def __init__(self, begin_ip, end_ip=None, prefix=None):
+        self.begin_ip = begin_ip
+        self.end_ip = end_ip if end_ip is not None else None
+        self.prefix = str(prefix) if prefix is not None else None
+
+class DimensionDataFirewallPortList(object):
+    """
+    A firewall port list
+    """
+    def __init__(self, name, network_domain, id, description,
+                 port_ranges, child_port_list_ids, status):
+        self.name = name
+        self.network_domain = network_domain
+        self.id = str(id)
+        self.description = description
+        self.port_ranges = port_ranges
+        self.child_port_list_ids = child_port_list_ids
+        self.status = status
+
+class DimensionDataFirewallPortRange(object):
+    """
+    A model for an port range entry in DimensionDataFirewallPortList.ports
+    """
+    def __init__(self, begin_port, end_port=None):
+        self.begin_port = str(begin_port)
+        self.end_port = str(end_port) if end_port is not None else None
+
+    def __repr__(self):
+        return (('<DimensionDataFirewallPortRange: begin_port=%s, end_port=%s>')
+                % (self.begin_port, self.end_port))
+
 class DimensionDataNatRule(object):
     """
     An IP NAT rule in a network domain
