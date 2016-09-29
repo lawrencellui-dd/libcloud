@@ -848,7 +848,7 @@ class DimensionDataFirewallAddressList(object):
         self.status = status
 
 
-class DimensionDataFirewallListIPRange(object):
+class DimensionDataFirewallIPRange(object):
     """
     A model for an ip address entry in DimensionDataFirewallAddressList.ip_addresses
     """
@@ -856,6 +856,10 @@ class DimensionDataFirewallListIPRange(object):
         self.begin_ip = begin_ip
         self.end_ip = end_ip if end_ip is not None else None
         self.prefix = str(prefix) if prefix is not None else None
+
+    def __repr__(self):
+        return (('<DimensionDataFirewallIPRange: begin_ip=%s, end_port=%s, prefix=%s>')
+                % (self.begin_ip, self.end_ip, self.prefix))
 
 class DimensionDataFirewallPortList(object):
     """

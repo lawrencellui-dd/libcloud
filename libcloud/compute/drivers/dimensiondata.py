@@ -39,6 +39,7 @@ from libcloud.common.dimensiondata import DimensionDataFirewallAddress
 from libcloud.common.dimensiondata import DimensionDataNatRule
 from libcloud.common.dimensiondata import DimensionDataAntiAffinityRule
 from libcloud.common.dimensiondata import DimensionDataFirewallAddressList
+from libcloud.common.dimensiondata import DimensionDataFirewallIPRange
 from libcloud.common.dimensiondata import DimensionDataFirewallPortList
 from libcloud.common.dimensiondata import DimensionDataFirewallPortRange
 from libcloud.common.dimensiondata import NetworkDomainServicePlan
@@ -2720,10 +2721,12 @@ class DimensionDataNodeDriver(NodeDriver):
 
     def _to_firewall_address_list(self, element, network_domain):
         ip_addresses = []
-        for ip_address in findall(element, 'ipAddress'):
-            ip_addresses.append(ip_address)
+        for ip_address in findall(element, 'ipAddress', TYPES_URN):
+            begin_ip = ip_address.get('begin')
+            end_ip = ip_address.get('end')
+            ip_addresses.append(DimensionDataFirewallIPRange(begin_ip, end_ip))
         child_ip_address_ids = []
-        for child_ip_address in findall(element, 'childIpAddressList'):
+        for child_ip_address in findall(element, 'childIpAddressList', TYPES_URN):
             child_ip_address_ids.append(child_ip_address.get('id'))
         address_list = element.find(fixxpath('ipAddressList', TYPES_URN))
         return DimensionDataFirewallAddressList(
