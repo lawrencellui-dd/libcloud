@@ -2745,12 +2745,12 @@ class DimensionDataNodeDriver(NodeDriver):
 
     def _to_firewall_port_list(self, element, network_domain):
         ports = []
-        for port in findall(element, 'port'):
+        for port in findall(element, 'port', TYPES_URN):
             begin_port = port.get('begin')
             end_port = port.get('end')
             ports.append(DimensionDataFirewallPortRange(begin_port, end_port))
         child_port_list_ids = []
-        for child_port_list in findall(element, 'childPortList'):
+        for child_port_list in findall(element, 'childPortList', TYPES_URN):
             child_port_list_ids.append(child_port_list.get('id'))
         return DimensionDataFirewallPortList(
             name=findtext(element, 'name', TYPES_URN),
