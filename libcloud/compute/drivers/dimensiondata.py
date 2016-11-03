@@ -2724,7 +2724,8 @@ class DimensionDataNodeDriver(NodeDriver):
         for ip_address in findall(element, 'ipAddress', TYPES_URN):
             begin_ip = ip_address.get('begin')
             end_ip = ip_address.get('end')
-            ip_addresses.append(DimensionDataFirewallIPRange(begin_ip, end_ip))
+            prefix = ip_address.get('prefixSize')
+            ip_addresses.append(DimensionDataFirewallIPRange(begin_ip, end_ip, prefix))
         child_ip_address_ids = []
         for child_ip_address in findall(element, 'childIpAddressList', TYPES_URN):
             child_ip_address_ids.append(child_ip_address.get('id'))
