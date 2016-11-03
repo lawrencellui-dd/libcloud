@@ -858,7 +858,7 @@ class DimensionDataFirewallIPRange(object):
         self.prefix = str(prefix) if prefix is not None else None
 
     def __repr__(self):
-        return (('<DimensionDataFirewallIPRange: begin_ip=%s, end_port=%s, prefix=%s>')
+        return (('<DimensionDataFirewallIPRange: begin_ip=%s, end_ip=%s, prefix=%s>')
                 % (self.begin_ip, self.end_ip, self.prefix))
 
 class DimensionDataFirewallPortList(object):
