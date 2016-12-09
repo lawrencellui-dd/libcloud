@@ -423,7 +423,7 @@ class DimensionDataBackupDriver(BackupDriver):
         return self._to_target(node)
 
     def ex_add_client_to_target(self, target, client_type, storage_policy,
-                                schedule_policy, trigger, emails):
+                                schedule_policy, trigger=None, emails=[]):
         """
         Add a client to a target
 
@@ -474,11 +474,11 @@ class DimensionDataBackupDriver(BackupDriver):
         else:
             ET.SubElement(backup_elm,
                           "schedulePolicyName").text = schedule_policy
-
-        alerting_elm = ET.SubElement(backup_elm, "alerting")
-        alerting_elm.set('trigger', trigger)
-        for email in emails:
-            ET.SubElement(alerting_elm, "emailAddress").text = email
+        if trigger:
+            alerting_elm = ET.SubElement(backup_elm, "alerting")
+            alerting_elm.set('trigger', trigger)
+            for email in emails:
+                ET.SubElement(alerting_elm, "emailAddress").text = email
 
         response = self.connection.request_with_orgId_api_1(
             'server/%s/backup/client' % (server_id),
